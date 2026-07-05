@@ -33,8 +33,7 @@ export async function PATCH(
   const rows = await sql`SELECT url FROM files WHERE id = ${id}`;
   if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Generate a signed download URL valid for 1 hour
-  const downloadUrl = await getDownloadUrl(rows[0].url, { expiresIn: 3600 });
+  const downloadUrl = await getDownloadUrl(rows[0].url);
 
   await sql`UPDATE files SET download_count = download_count + 1 WHERE id = ${id}`;
 
