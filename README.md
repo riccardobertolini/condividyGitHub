@@ -4,7 +4,7 @@ App di condivisione file con interfaccia drag & drop, protetta da password, cost
 
 ## Stack
 
-- **Frontend/Backend**: Next.js 15 (App Router)
+- **Frontend/Backend**: Next.js 16 (App Router)
 - **Database**: Neon (PostgreSQL serverless)
 - **Storage**: Vercel Blob
 - **Deploy**: Vercel
