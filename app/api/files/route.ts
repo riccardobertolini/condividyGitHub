@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   const uniqueName = `${uuidv4()}.${ext}`;
 
   const blob = await put(uniqueName, file, {
-    access: 'private',
+    access: 'public',
   });
 
   await sql`

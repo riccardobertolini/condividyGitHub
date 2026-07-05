@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { sql } from '@/lib/db';
-import { del, getDownloadUrl } from '@vercel/blob';
+import { del } from '@vercel/blob';
 
 export async function DELETE(
   _request: NextRequest,
@@ -33,9 +33,8 @@ export async function PATCH(
   const rows = await sql`SELECT url FROM files WHERE id = ${id}`;
   if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const downloadUrl = await getDownloadUrl(rows[0].url);
-
   await sql`UPDATE files SET download_count = download_count + 1 WHERE id = ${id}`;
 
-  return NextResponse.json({ ok: true, downloadUrl });
+  // Return the stored URL directly for download
+  return NextResponse.json({ ok: true, downloadUrl: rows[0].url });
 }
