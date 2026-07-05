@@ -10,9 +10,7 @@ export default async function Home() {
     redirect('/login');
   }
 
-  const files = await sql<FileRecord[]>`
-    SELECT * FROM files ORDER BY upload_date DESC
-  `;
+  const files = await sql`SELECT * FROM files ORDER BY upload_date DESC` as FileRecord[];
 
   return <FilesPage files={files} />;
 }
