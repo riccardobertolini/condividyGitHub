@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
 import { sql } from '@/lib/db';
-import { del } from '@vercel/blob';
+import { del, getDownloadUrl } from '@vercel/blob';
 
 export async function DELETE(
   _request: NextRequest,
@@ -29,6 +29,14 @@ export async function PATCH(
   if (!authenticated) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
+
+  const rows = await sql`SELECT url FROM files WHERE id = ${id}`;
+  if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Generate a signed download URL valid for 1 hour
+  const downloadUrl = await getDownloadUrl(rows[0].url, { expiresIn: 3600 });
+
   await sql`UPDATE files SET download_count = download_count + 1 WHERE id = ${id}`;
-  return NextResponse.json({ ok: true });
+
+  return NextResponse.json({ ok: true, downloadUrl });
 }

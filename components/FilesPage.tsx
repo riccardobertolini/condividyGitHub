@@ -40,24 +40,25 @@ export default function FilesPage({ files: initialFiles }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const router = useRouter();
 
   const uploadFiles = useCallback(async (acceptedFiles: File[]) => {
     setUploading(true);
     setUploadProgress([]);
-    
+
     for (const file of acceptedFiles) {
       setUploadProgress(prev => [...prev, `Caricamento ${file.name}...`]);
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const res = await fetch('/api/files', { method: 'POST', body: formData });
       if (res.ok) {
-        setUploadProgress(prev => prev.map(p => 
+        setUploadProgress(prev => prev.map(p =>
           p === `Caricamento ${file.name}...` ? `✅ ${file.name} caricato` : p
         ));
       } else {
-        setUploadProgress(prev => prev.map(p => 
+        setUploadProgress(prev => prev.map(p =>
           p === `Caricamento ${file.name}...` ? `❌ Errore: ${file.name}` : p
         ));
       }
@@ -65,13 +66,13 @@ export default function FilesPage({ files: initialFiles }: Props) {
 
     setUploading(false);
     router.refresh();
-    
+
     const res = await fetch('/api/files');
     if (res.ok) {
       const data = await res.json();
       setFiles(data);
     }
-    
+
     setTimeout(() => setUploadProgress([]), 3000);
   }, [router]);
 
@@ -89,15 +90,20 @@ export default function FilesPage({ files: initialFiles }: Props) {
   };
 
   const handleDownload = async (file: FileRecord) => {
-    await fetch(`/api/files/${file.id}`, { method: 'PATCH' });
-    const a = document.createElement('a');
-    a.href = file.url;
-    a.download = file.original_name;
-    a.target = '_blank';
-    a.click();
-    setFiles(prev => prev.map(f => 
-      f.id === file.id ? { ...f, download_count: f.download_count + 1 } : f
-    ));
+    setDownloadingId(file.id);
+    const res = await fetch(`/api/files/${file.id}`, { method: 'PATCH' });
+    if (res.ok) {
+      const { downloadUrl } = await res.json();
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = file.original_name;
+      a.target = '_blank';
+      a.click();
+      setFiles(prev => prev.map(f =>
+        f.id === file.id ? { ...f, download_count: f.download_count + 1 } : f
+      ));
+    }
+    setDownloadingId(null);
   };
 
   const handleLogout = async () => {
@@ -194,9 +200,10 @@ export default function FilesPage({ files: initialFiles }: Props) {
                   <button
                     onClick={() => handleDownload(file)}
                     className="btn btn-primary"
+                    disabled={downloadingId === file.id}
                     style={{ padding: '8px 14px', fontSize: '13px' }}
                   >
-                    ⬇️ Scarica
+                    {downloadingId === file.id ? '...' : '⬇️ Scarica'}
                   </button>
                   <button
                     onClick={() => handleDelete(file.id, file.original_name)}
